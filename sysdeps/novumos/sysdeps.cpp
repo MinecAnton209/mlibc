@@ -117,7 +117,7 @@ int Sysdeps<TcbSet>::operator()(void *pointer) {
 		return EFAULT;
 	// The kernel also sets the selector on return; reloading here keeps the cached descriptor fresh.
 	asm volatile("mov $0xB3, %%ax\n\tmov %%ax, %%gs" ::: "ax");
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
+	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer);
 	asm volatile("mov %0, %%gs:0" ::"r"(thread_data));
 	return 0;
 }
