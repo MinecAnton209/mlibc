@@ -113,6 +113,10 @@ int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 }
 
 int Sysdeps<TcbSet>::operator()(void *pointer) {
+	if (static_cast<unsigned long>(syscall(SYS_SET_TLS_BASE, reinterpret_cast<uintptr_t>(pointer))) == 0xFFFFFFFFul)
+		return EFAULT;
+	// The kernel also sets the selector on return; reloading here keeps the cached descriptor fresh.
+	asm volatile("mov $0xB3, %%ax\n\tmov %%ax, %%gs" ::: "ax");
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
 	asm volatile("mov %0, %%gs:0" ::"r"(thread_data));
 	return 0;

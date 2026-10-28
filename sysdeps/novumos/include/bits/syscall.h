@@ -61,6 +61,7 @@
 #define SYS_GETPPID     113
 #define SYS_UNAME       114
 #define SYS_FUTEX       120
+#define SYS_SET_TLS_BASE 118
 
 #ifndef __cplusplus
 #error "This header is currently C++ only"
