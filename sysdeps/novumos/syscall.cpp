@@ -11,17 +11,18 @@ extern "C" long __do_syscall_ret(unsigned long ret) {
 
 using sc_word_t = long;
 
-// NovumOS has no int 0x80 gate: syscalls enter via SYSENTER with the SDK stub layout
-// (stack [EFLAGS][0][0] and ECX = that stack pointer). The kernel reads four arguments
-// (EBX, ESI, EDI, EBP), so a5 is not forwarded.
+// NovumOS has no int 0x80 gate: syscalls enter via SYSENTER with the SDK stub layout.
+// The kernel reads arg1 from EBX, arg2 from the stub frame (ECX), arg3 from the frame (EDX)
+// and arg4 from EBP; a5 is not forwarded.
 static inline long sysenter_call(long n, long a1, long a2, long a3, long a4, long a5) {
 	(void)a5;
 	long ret;
 	asm volatile (
-		"pushl %%ebp\n\t"
+		"movl %%ebp, %%ecx\n\t"
 		"movl %[a4], %%ebp\n\t"
-		"pushl $0\n\t"
-		"pushl $0\n\t"
+		"pushl %%ecx\n\t"
+		"pushl %%esi\n\t"
+		"pushl %%edi\n\t"
 		"pushfl\n\t"
 		"movl %%esp, %%ecx\n\t"
 		"call 1f\n"
@@ -31,8 +32,9 @@ static inline long sysenter_call(long n, long a1, long a2, long a3, long a4, lon
 		"popl %%ebp\n\t"
 		: "=a"(ret)
 		: "a"(n), "b"(a1), "S"(a2), "D"(a3), [a4] "m"(a4)
-		: "ecx", "edx", "ebp", "memory"
+		: "ecx", "edx", "memory"
 	);
+	(void)a3;
 	return ret;
 }
 sc_word_t __do_syscall0(long sc) {
