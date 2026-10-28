@@ -334,6 +334,10 @@ elif host_machine.system() == 'ethereal'
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
 # ANCHOR_END: demo-sysdeps
+elif host_machine.system() == 'novumos'
+	rtld_include_dirs += include_directories('sysdeps/novumos/include')
+	libc_include_dirs += include_directories('sysdeps/novumos/include')
+	subdir('sysdeps/novumos')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
