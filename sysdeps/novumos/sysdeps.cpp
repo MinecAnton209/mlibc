@@ -23,8 +23,8 @@ void Sysdeps<LibcLog>::operator()(const char *msg) {
 }
 
 int Sysdeps<Isatty>::operator()(int fd) {
-	(void)fd;
-	return 0; // always a tty
+	// Only the standard streams are terminals; other descriptors are not.
+	return (fd >= 0 && fd <= 2) ? 0 : ENOTTY;
 }
 
 int Sysdeps<Write>::operator()(int fd, const void *buf, size_t size, ssize_t *bytes_written) {
@@ -96,6 +96,9 @@ int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
 }
 
 int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+	// The kernel maps anonymous memory only; file-backed mappings are not supported.
+	if (!(flags & MAP_ANONYMOUS) || fd != -1)
+		return ENODEV;
 	auto ret = syscall(SYS_MMAP, (long)hint, size, prot, flags, fd, offset);
 	if (ret < 0 || ret == (long)MAP_FAILED) {
 		*window = nullptr;
